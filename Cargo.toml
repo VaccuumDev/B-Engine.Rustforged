@@ -1,0 +1,9 @@
+[package]
+name = "b-engine"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+avian3d = "0.4.1"
+bevy = "0.18.0"
+bevy_pipelines_ready = "0.8.0"
