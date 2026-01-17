@@ -1,46 +1,35 @@
 use bevy::{post_process::motion_blur::MotionBlur, prelude::*, render::view::Hdr};
-
-use crate::b_elements::{Element, MaterialType};
+use bevy_ahoy::prelude::AhoyPlugin;
+use bevy_pipelines_ready::PipelinesReady;
 
 pub struct BInit;
 
 impl Plugin for BInit {
     fn build(&self, game: &mut App) {
-        game.add_systems(Startup, global_startup);
+        game.add_plugins(DefaultPlugins)
+            .add_plugins(AhoyPlugin)
+            .insert_resource(PipelinesReady::default())
+            .add_systems(Startup, (global_startup, splash_screen));
         //.init_resource::<GameSettings>();
-        //.add_plugins(PhysicsPlugins::default());
     }
 }
 
 #[allow(unused_parens)]
-fn global_startup(
-    mut bengine: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn global_startup(mut bengine: Commands) {
     info!("Global Startup");
-    bengine.spawn((
-        Mesh3d(meshes.add(Cuboid::default())),
-        MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_translation(Vec3::ZERO),
-        Element::new(MaterialType::Metal, 255, 255),
-    ));
-    bengine.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
-        Hdr,
-        DistanceFog {
-            color: Color::srgba_u8(2, 64, 200, 255),
-            falloff: FogFalloff::Exponential { density: 0.5 },
-            ..default()
-        },
-        MotionBlur::default(),
-    ));
 
     bengine.spawn((
         DirectionalLight::default(),
         Transform::from_xyz(3.0, 3.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+#[allow(unused_parens)]
+fn splash_screen(mut bengine: Commands) {
+    bengine.spawn((Text::new("B-Engine")));
+    /*if (PipelinesReady::get() != 0) {
+        despawn();
+    }*/
 }
 /*
 #[derive(Resource)]

@@ -20,6 +20,13 @@ impl Element {
             state: state,
         }
     }
+    pub fn default() -> Self {
+        Element {
+            material: MaterialType::Wood,
+            durability: 255,
+            state: 0,
+        }
+    }
 }
 
 pub enum MaterialType {
