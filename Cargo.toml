@@ -5,14 +5,10 @@ edition = "2024"
 
 [dependencies]
 bevy = "0.18.0"
-bevy_ahoy = "0.0.2"
-bevy_enhanced_input = "0.22.1"
 bevy_pipelines_ready = "0.8.0"
+quinn = "0.11.9"
 
 [[test]]
 name = "tests"
 path = "tests/simple.rs"
 harness = false
-
-[patch.crates-io]
-avian3d = { git = "https://github.com/avianphysics/avian" }
