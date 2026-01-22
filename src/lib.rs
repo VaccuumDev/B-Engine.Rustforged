@@ -1,14 +1,13 @@
-use crate::{b_elements::BElements, b_init::BInit};
+use crate::{
+    b_elements::BElements, b_init::BInit, b_physics::physics::BPhysics, b_physics::utils::*,
+    b_player::BPlayer,
+};
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
 pub mod b_elements;
 pub mod b_init;
-pub mod b_player {
-    pub mod b_player;
-}
-/*pub mod b_physics {
-    pub mod b_physics;
-}*/
+pub mod b_physics;
+pub mod b_player;
 
 pub struct BEngine;
 
@@ -17,13 +16,7 @@ impl PluginGroup for BEngine {
         PluginGroupBuilder::start::<Self>()
             .add(BInit)
             .add(BElements)
+            .add(BPlayer)
+            .add(BPhysics)
     }
 }
-/*
- * Надо сделать подключениие физики иименно в приложениеи в одном из плагинов
- *
- *
- *
- *
- *
- */
