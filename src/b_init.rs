@@ -1,6 +1,7 @@
 use bevy::{
+    diagnostic::{DiagnosticPath, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin},
     prelude::*,
-    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
+    window::{CursorGrabMode, CursorOptions},
 };
 use bevy_pipelines_ready::PipelinesReady;
 
@@ -22,12 +23,31 @@ impl Plugin for BInit {
             }),
             ..default()
         }))
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(SystemInformationDiagnosticsPlugin::default())
         .insert_resource(PipelinesReady::default())
         .insert_resource(ClearColor(Color::linear_rgb(0.3, 0.3, 0.6)))
-        .add_systems(Startup, (global_startup, splash_screen));
+        .insert_resource(GameSettings {
+            atmosphere: false,
+            motion_blur: true,
+        })
+        .add_systems(Startup, (global_startup, draw_ui))
+        .add_systems(Update, update_dmenu);
         //.init_resource::<GameSettings>();
     }
 }
+
+const FRAME_TIME_DIAGNOSTICS: [DiagnosticPath; 2] = [
+    FrameTimeDiagnosticsPlugin::FPS,
+    FrameTimeDiagnosticsPlugin::FRAME_TIME,
+];
+
+const SYSTEM_INFO_DIAGNOSTICS: [DiagnosticPath; 4] = [
+    SystemInformationDiagnosticsPlugin::PROCESS_CPU_USAGE,
+    SystemInformationDiagnosticsPlugin::PROCESS_MEM_USAGE,
+    SystemInformationDiagnosticsPlugin::SYSTEM_CPU_USAGE,
+    SystemInformationDiagnosticsPlugin::SYSTEM_MEM_USAGE,
+];
 
 #[allow(unused_parens)]
 fn global_startup(mut bengine: Commands) {
@@ -40,16 +60,27 @@ fn global_startup(mut bengine: Commands) {
 }
 
 #[allow(unused_parens)]
-fn splash_screen(mut bengine: Commands) {
-    bengine.spawn((Text::new("B-Engine v0.1.1")));
+fn draw_ui(mut bengine: Commands) {
+    bengine.spawn((
+        Node::default(),
+        children![(Text::new("B-Engine v0.1.1")), (Text::new("dmenu"), DText)],
+    ));
     /*if (PipelinesReady::get() != 0) {
     despawn();
     }*/
 }
-/*
-#[derive(Resource)]
-struct GameSettings {
-motion_blur: bool,
-bloom: u8,
+
+fn update_dmenu(dtext: Single<&mut Text, With<DText>>) {
+    //    if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
+    //        && let Some(value) = fps.smoothed()
+    //    {dtext.0 = }
 }
-*/
+
+#[derive(Component)]
+struct DText;
+
+#[derive(Resource)]
+pub struct GameSettings {
+    pub atmosphere: bool,
+    pub motion_blur: bool,
+}
