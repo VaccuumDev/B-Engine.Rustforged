@@ -1,6 +1,13 @@
-use crate::b_physics::physics::PhysBody;
+use crate::{b_init::GameSettings, b_physics::physics::PhysBody};
 use bevy::{
-    input::mouse::MouseMotion, post_process::motion_blur::MotionBlur, prelude::*, render::view::Hdr,
+    anti_alias::fxaa::Fxaa,
+    camera::Exposure,
+    core_pipeline::tonemapping::Tonemapping,
+    input::mouse::MouseMotion,
+    pbr::{Atmosphere, AtmosphereSettings, ScatteringMedium},
+    post_process::{bloom::Bloom, motion_blur::MotionBlur},
+    prelude::*,
+    render::view::Hdr,
 };
 
 pub struct BPlayer;
@@ -13,23 +20,21 @@ impl Plugin for BPlayer {
 }
 
 #[derive(Component)]
-struct Controller {
-    speed: f32,
-    jump_height: i8,
-}
+struct Controller;
 
 impl Controller {
-    pub fn new(speed: f32, jump_height: i8) -> Self {
-        Controller {
-            speed: speed,
-            jump_height: jump_height,
-        }
+    pub fn new() -> Self {
+        Controller
     }
 }
 
-fn spawn_player(mut bengine: Commands) {
+fn spawn_player(
+    mut bengine: Commands,
+    mut scaterring: ResMut<Assets<ScatteringMedium>>,
+    settings: Res<GameSettings>,
+) {
     let transform: Transform =
-        Transform::from_xyz(0.0, 4.0, -1.0).looking_at(vec3(0f32, 4f32, 8.1), Vec3::Y);
+        Transform::from_xyz(0.0, 4.0, -1.0).looking_at(vec3(0f32, 4f32, 0.0), Vec3::Y);
     bengine.spawn((
         children![(
             transform,
@@ -40,28 +45,37 @@ fn spawn_player(mut bengine: Commands) {
                 falloff: FogFalloff::Exponential { density: 0.1 },
                 ..default()
             },
-            MotionBlur::default(),
             Projection::from(PerspectiveProjection {
                 fov: 90.0_f32.to_radians(),
                 ..default()
             }),
+            /*either!(settings.atmosphere => // TODO: settings
+                    Some(Atmosphere::earthlike(scaterring.add(ScatteringMedium::default())))
+                    ,,
+                    None
+            ),
+            AtmosphereSettings::default(),
+            either! (settings.motion_blur =>
+                Some(MotionBlur::default()) ,, None),*/
+            MotionBlur::default(),
+            Exposure { ev100: 13.0 },
+            Tonemapping::AcesFitted,
+            Bloom::NATURAL,
+            Fxaa::default(),
         )],
         transform,
         PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
-        Controller::new(2.5, 30), // human speed is 1,4m/s
+        Controller::new(),
     ));
 }
 
 fn controller_update(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut PhysBody, &mut Transform, &mut Controller), With<Controller>>,
+    mut p: Single<(&mut PhysBody, &mut Transform, &mut Controller), With<Controller>>,
     mut mouse: MessageReader<MouseMotion>,
-    mut cam_q: Query<&mut Transform, (With<Camera3d>, Without<Controller>)>,
+    mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
 ) {
-    let mut p = query.single_mut().unwrap();
-    let mut cam = cam_q.single_mut().unwrap();
-
     // Rotate camera by moving mouse
     let mut cursor_delta = Vec2::ZERO;
     for e in mouse.read() {
@@ -76,8 +90,8 @@ fn controller_update(
         let dx = cursor_delta.x * 100f32 * dt;
         let dy = cursor_delta.y * 100f32 * dt;
 
-        cam.rotate_y(dx);
-        cam.rotate_local_x(dy);
+        cam.rotate_y(-dx);
+        cam.rotate_local_x(-dy);
     }
 
     // Move by pressing WASD
@@ -87,16 +101,13 @@ fn controller_update(
         (KeyCode::KeyS, -Vec3::Z),
         (KeyCode::KeyD, -Vec3::X),
         (KeyCode::ShiftLeft, -Vec3::Y),
-        (
-            KeyCode::Space,
-            Vec3::new(0f32, p.2.jump_height.val_num_f32(), 0f32),
-        ),
+        (KeyCode::Space, Vec3::new(0f32, 15f32, 0f32)),
     ]
     .iter()
     .cloned()
     {
         if keyboard.pressed(key) {
-            p.0.apply_acc(dir * p.2.speed);
+            p.0.apply_acc(dir * 20f32);
             //p.0.apply_moment(dir.to_vec3a() * 0.001);
         }
     }
