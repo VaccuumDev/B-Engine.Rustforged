@@ -20,12 +20,12 @@ fn setup(
         MeshMaterial3d(materials.add(Color::WHITE)),
         Element::new(MaterialType::Metal, 255, 255),
         t,
-        PhysBody::new(t, vec3(0.5, 0.5, 0.5)),
+        PhysBody::new(t, vec3(0.5, 0.5, 0.5), 1f32),
     ));
     bengine.spawn((
         Mesh3d(meshes.add(Plane3d::default())),
         MeshMaterial3d(materials.add(Color::linear_rgb(0f32, 1f32, 0f32))),
-        Transform::from_scale(Vec3::new(12f32, 1f32, 12f32)),
+        Transform::from_scale(Vec3::new(24f32, 1f32, 24f32)),
         Element::new(MaterialType::Metal, 255, 255),
     ));
 }
