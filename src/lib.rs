@@ -1,3 +1,5 @@
+#![feature(duration_millis_float)]
+
 use crate::{
     b_elements::BElements, b_init::BInit, b_physics::physics::BPhysics, b_physics::utils::*,
     b_player::BPlayer,

@@ -6,6 +6,7 @@ impl Plugin for BElements {
     fn build(&self, _app: &mut App) {}
 }
 
+#[allow(dead_code)]
 #[derive(Component)]
 pub struct Element {
     material: MaterialType,
