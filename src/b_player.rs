@@ -38,8 +38,7 @@ fn spawn_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let transform: Transform =
-        Transform::from_xyz(0.0, 0.1, -1.0).looking_at(vec3(0f32, 4f32, 0.0), Vec3::Y);
+    let transform: Transform = Transform::from_rotation(Quat::IDENTITY);
     bengine.spawn((
         children![(
             transform,
@@ -72,10 +71,10 @@ fn spawn_player(
         //PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
         RigidBody::Dynamic,
         Collider::capsule(0.5, 2f32),
-        LockedAxes::new().lock_rotation_z().lock_translation_x(),
+        LockedAxes::new().lock_rotation_z().lock_rotation_x(),
         Controller::new(),
-        Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
-        MeshMaterial3d(materials.add(StandardMaterial::default())),
+        //Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
+        //MeshMaterial3d(materials.add(StandardMaterial::default())),
     ));
 }
 
@@ -103,10 +102,10 @@ fn controller_update(
     // Move by pressing WASD
     let mut v: Vec3A = Vec3A::ZERO;
     for (key, dir) in [
-        (KeyCode::KeyW, Vec3A::NEG_Z),
-        (KeyCode::KeyA, Vec3A::NEG_X),
-        (KeyCode::KeyS, Vec3A::Z),
-        (KeyCode::KeyD, Vec3A::X),
+        (KeyCode::KeyW, p.1.forward().to_vec3a()),
+        (KeyCode::KeyA, p.1.left().to_vec3a()),
+        (KeyCode::KeyS, p.1.back().to_vec3a()),
+        (KeyCode::KeyD, p.1.right().to_vec3a()),
         //(KeyCode::ShiftLeft, Vec3::Y),
         (KeyCode::Space, Vec3A::Y),
     ]
@@ -128,5 +127,5 @@ fn controller_update(
     }
 
     // Some debug
-    //info!("{}", p.1.translation);
+    info!("{}, {}", p.1.translation, p.1.rotation);
 }

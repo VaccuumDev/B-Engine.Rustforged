@@ -15,7 +15,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let t = Transform::from_xyz(0f32, 10f32, 0f32);
+    let t = Transform::from_xyz(-2.5, 10f32, 0f32);
     bengine.spawn((
         Mesh3d(meshes.add(Cuboid::from_length(1f32))),
         MeshMaterial3d(materials.add(Color::WHITE)),
