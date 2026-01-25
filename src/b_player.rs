@@ -1,4 +1,6 @@
-use crate::{b_init::GameSettings, b_physics::physics::PhysBody};
+use crate::b_init::GameSettings;
+use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody};
+#[allow(unused_imports)]
 use bevy::{
     anti_alias::fxaa::Fxaa,
     camera::Exposure,
@@ -28,13 +30,16 @@ impl Controller {
     }
 }
 
+#[allow(unused)]
 fn spawn_player(
     mut bengine: Commands,
     mut scaterring: ResMut<Assets<ScatteringMedium>>,
     settings: Res<GameSettings>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let transform: Transform =
-        Transform::from_xyz(0.0, 4.0, -1.0).looking_at(vec3(0f32, 4f32, 0.0), Vec3::Y);
+        Transform::from_xyz(0.0, 0.1, -1.0).looking_at(vec3(0f32, 4f32, 0.0), Vec3::Y);
     bengine.spawn((
         children![(
             transform,
@@ -57,59 +62,69 @@ fn spawn_player(
             AtmosphereSettings::default(),
             either! (settings.motion_blur =>
                 Some(MotionBlur::default()) ,, None),*/
-            MotionBlur::default(),
+            //MotionBlur::default(),
             Exposure { ev100: 13.0 },
             Tonemapping::AcesFitted,
             Bloom::NATURAL,
             Fxaa::default(),
         )],
         transform,
-        PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
+        //PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
+        RigidBody::Dynamic,
+        Collider::capsule(0.5, 2f32),
+        LockedAxes::new().lock_rotation_z().lock_translation_x(),
         Controller::new(),
+        Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
+        MeshMaterial3d(materials.add(StandardMaterial::default())),
     ));
 }
 
 fn controller_update(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut p: Single<(&mut PhysBody, &mut Transform, &mut Controller), With<Controller>>,
+    mut p: Single<(&mut LinearVelocity, &mut Transform), With<Controller>>,
     mut mouse: MessageReader<MouseMotion>,
     mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
 ) {
-    // Rotate camera by moving mouse
+    // Camera controls
     let mut cursor_delta = Vec2::ZERO;
     for e in mouse.read() {
         cursor_delta += e.delta * 0.001;
     }
     if !(cursor_delta == Vec2::ZERO) {
-        info!("{}", cam.rotation);
-        //cam.rotation.y += cursor_delta.x;
-        //cam.rotation.z += cursor_delta.y;
-
         let dt = time.delta_secs();
         let dx = cursor_delta.x * 100f32 * dt;
         let dy = cursor_delta.y * 100f32 * dt;
 
-        cam.rotate_y(-dx);
+        p.1.rotate_y(-dx); // HACK: Idk looks kinda strange
         cam.rotate_local_x(-dy);
     }
 
     // Move by pressing WASD
+    let mut v: Vec3A = Vec3A::ZERO;
     for (key, dir) in [
-        (KeyCode::KeyW, Vec3::Z),
-        (KeyCode::KeyA, Vec3::X),
-        (KeyCode::KeyS, -Vec3::Z),
-        (KeyCode::KeyD, -Vec3::X),
-        (KeyCode::ShiftLeft, -Vec3::Y),
-        (KeyCode::Space, Vec3::new(0f32, 15f32, 0f32)),
+        (KeyCode::KeyW, Vec3A::NEG_Z),
+        (KeyCode::KeyA, Vec3A::NEG_X),
+        (KeyCode::KeyS, Vec3A::Z),
+        (KeyCode::KeyD, Vec3A::X),
+        //(KeyCode::ShiftLeft, Vec3::Y),
+        (KeyCode::Space, Vec3A::Y),
     ]
     .iter()
     .cloned()
     {
         if keyboard.pressed(key) {
-            p.0.apply_acc(dir * 20f32);
-            //p.0.apply_moment(dir.to_vec3a() * 0.001);
+            v += dir;
         }
+    }
+    v = v.normalize_or_zero();
+    v *= 7f32; // Player speed
+    p.0.0 += v.to_vec3();
+    let current_speed = p.0.length();
+    if current_speed > 0.0 {
+        // Apply friction
+        p.0.0 = p.0.0 / current_speed
+            * (current_speed - current_speed * 20f32 * time.delta_secs()).max(0.0)
     }
 
     // Some debug

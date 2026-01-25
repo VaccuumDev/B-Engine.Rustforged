@@ -25,6 +25,7 @@ impl Plugin for BInit {
         }))
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(SystemInformationDiagnosticsPlugin::default())
+        .add_plugins(avian3d::PhysicsPlugins::default())
         .insert_resource(PipelinesReady::default())
         .insert_resource(ClearColor(Color::linear_rgb(0.3, 0.3, 0.6)))
         .insert_resource(GameSettings {
