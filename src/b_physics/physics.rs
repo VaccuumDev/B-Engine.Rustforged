@@ -40,9 +40,6 @@ impl PhysBody {
         let radius = self.collider.half_size();
 
         self.speed = -self.speed * dir.to_vec3() / self.mass;
-
-        // Approximation of M = F*r*sin(alpha)
-        //self.apply_moment(radius * self.speed.to_vec3a());
     }
     /// Sometimes you need to apply force...
     pub fn apply_force(&mut self, force: Vec3) {

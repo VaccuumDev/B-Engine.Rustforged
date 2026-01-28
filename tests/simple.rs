@@ -28,7 +28,7 @@ fn setup(
     bengine.spawn((
         Mesh3d(meshes.add(Plane3d::new(Vec3::Y, vec2(12f32, 12f32)))),
         MeshMaterial3d(materials.add(Color::linear_rgb(0f32, 1f32, 0f32))),
-        Transform::from_translation(Vec3::ZERO),
+        Transform::from_translation(Vec3::NEG_Y),
         Element::new(MaterialType::Metal, 255, 255),
         RigidBody::Static,
         Collider::cuboid(24f32, 0.1, 24f32),

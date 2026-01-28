@@ -1,5 +1,5 @@
 use crate::b_init::GameSettings;
-use avian3d::prelude::{Collider, LinearVelocity, LockedAxes, RigidBody};
+use avian3d::prelude::{Collider, Friction, LinearVelocity, LockedAxes, RigidBody};
 #[allow(unused_imports)]
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -20,6 +20,8 @@ impl Plugin for BPlayer {
             .add_systems(Update, controller_update);
     }
 }
+
+pub const MAX_PLAYER_SPEED: f32 = 3.5;
 
 #[derive(Component)]
 struct Controller;
@@ -70,11 +72,15 @@ fn spawn_player(
         transform,
         //PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
         RigidBody::Dynamic,
+        Friction::new(1.2),
         Collider::capsule(0.5, 2f32),
-        LockedAxes::new().lock_rotation_z().lock_rotation_x(),
+        LockedAxes::new()
+            .lock_rotation_z()
+            .lock_rotation_x()
+            .lock_rotation_y(),
         Controller::new(),
-        //Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
-        //MeshMaterial3d(materials.add(StandardMaterial::default())),
+        Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
+        MeshMaterial3d(materials.add(StandardMaterial::default())),
     ));
 }
 
@@ -100,7 +106,7 @@ fn controller_update(
     }
 
     // Move by pressing WASD
-    let mut v: Vec3A = Vec3A::ZERO;
+    let mut a: Vec3A = Vec3A::ZERO;
     for (key, dir) in [
         (KeyCode::KeyW, p.1.forward().to_vec3a()),
         (KeyCode::KeyA, p.1.left().to_vec3a()),
@@ -113,18 +119,20 @@ fn controller_update(
     .cloned()
     {
         if keyboard.pressed(key) {
-            v += dir;
+            a += dir;
         }
     }
-    v = v.normalize_or_zero();
-    v *= 7f32; // Player speed
-    p.0.0 += v.to_vec3();
-    let current_speed = p.0.length();
-    if current_speed > 0.0 {
-        // Apply friction
+    a = a.normalize_or_zero();
+    a *= 0.2;
+    p.0.0 += a.to_vec3();
+    p.0.0.x = p.0.0.x.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
+    p.0.0.y = p.0.0.y.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
+    p.0.0.z = p.0.0.z.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
+    /*let current_speed = p.0.length();
+    if (current_speed > 0f32) {
         p.0.0 = p.0.0 / current_speed
             * (current_speed - current_speed * 20f32 * time.delta_secs()).max(0.0)
-    }
+    }*/
 
     // Some debug
     info!("{}, {}", p.1.translation, p.1.rotation);
