@@ -1,5 +1,6 @@
-use crate::b_init::GameSettings;
-use avian3d::prelude::{Collider, Friction, LinearVelocity, LockedAxes, RigidBody};
+use avian3d::prelude::{
+    Collider, Friction, LinearVelocity, LockedAxes, RigidBody, SpatialQuery, SpatialQueryFilter,
+};
 #[allow(unused_imports)]
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -16,80 +17,121 @@ pub struct BPlayer;
 
 impl Plugin for BPlayer {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
-            .add_systems(Update, controller_update);
+        app.add_systems(Update, controller_update);
     }
 }
 
-pub const MAX_PLAYER_SPEED: f32 = 3.5;
-
-#[derive(Component)]
-struct Controller;
-
-impl Controller {
-    pub fn new() -> Self {
-        Controller
+#[derive(Bundle)]
+pub struct Player {
+    controller: Controller,
+    transform: Transform,
+    rb: RigidBody,
+    friction: Friction,
+    col: Collider,
+    lock: LockedAxes,
+}
+impl Default for Player {
+    fn default() -> Self {
+        Player {
+            controller: Controller::new(3.5, 50),
+            transform: Transform::from_rotation(Quat::IDENTITY),
+            rb: RigidBody::Dynamic,
+            friction: Friction::new(1.2),
+            col: Collider::capsule(0.5, 2f32),
+            lock: LockedAxes::new()
+                .lock_rotation_z()
+                .lock_rotation_x()
+                .lock_rotation_y(),
+        }
+    }
+}
+impl Player {
+    pub fn new(
+        controller: Controller,
+        transform: Transform,
+        rb: RigidBody,
+        friction: Friction,
+        col: Collider,
+        lock: LockedAxes,
+    ) -> Self {
+        Player {
+            controller: controller,
+            transform: transform,
+            rb: rb,
+            friction: friction,
+            col: col,
+            lock: lock,
+        }
     }
 }
 
-#[allow(unused)]
-fn spawn_player(
-    mut bengine: Commands,
-    mut scaterring: ResMut<Assets<ScatteringMedium>>,
-    settings: Res<GameSettings>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let transform: Transform = Transform::from_rotation(Quat::IDENTITY);
-    bengine.spawn((
-        children![(
-            transform,
-            Camera3d::default(),
-            Hdr,
-            DistanceFog {
+#[derive(Bundle)]
+pub struct PlayerCamera {
+    transform: Transform,
+    cam: Camera3d,
+    hdr: Hdr,
+    dist_fog: DistanceFog,
+    projection: Projection,
+    /*either!(settings.atmosphere => // TODO: settings
+            Some(Atmosphere::earthlike(scaterring.add(ScatteringMedium::default())))
+            ,,
+            None
+    ),
+    AtmosphereSettings::default(),
+    either! (settings.motion_blur =>
+        Some(MotionBlur::default()) ,, None),*/
+    //MotionBlur::default(),
+    exposure: Exposure,
+    tonemapping: Tonemapping,
+    bloom: Bloom,
+    fxaa: Fxaa,
+}
+impl Default for PlayerCamera {
+    fn default() -> Self {
+        PlayerCamera {
+            transform: Transform::from_rotation(Quat::IDENTITY),
+
+            cam: Camera3d::default(),
+            hdr: Hdr,
+            dist_fog: DistanceFog {
                 color: Color::srgb_u8(183, 251, 251),
                 falloff: FogFalloff::Exponential { density: 0.1 },
                 ..default()
             },
-            Projection::from(PerspectiveProjection {
+            projection: Projection::from(PerspectiveProjection {
                 fov: 90.0_f32.to_radians(),
                 ..default()
             }),
-            /*either!(settings.atmosphere => // TODO: settings
-                    Some(Atmosphere::earthlike(scaterring.add(ScatteringMedium::default())))
-                    ,,
-                    None
-            ),
-            AtmosphereSettings::default(),
-            either! (settings.motion_blur =>
-                Some(MotionBlur::default()) ,, None),*/
-            //MotionBlur::default(),
-            Exposure { ev100: 13.0 },
-            Tonemapping::AcesFitted,
-            Bloom::NATURAL,
-            Fxaa::default(),
-        )],
-        transform,
-        //PhysBody::new(transform, vec3(0.5, 2.0, 0.5), 5f32),
-        RigidBody::Dynamic,
-        Friction::new(1.2),
-        Collider::capsule(0.5, 2f32),
-        LockedAxes::new()
-            .lock_rotation_z()
-            .lock_rotation_x()
-            .lock_rotation_y(),
-        Controller::new(),
-        Mesh3d(meshes.add(Cuboid::from_size(vec3(1f32, 2f32, 1f32)))),
-        MeshMaterial3d(materials.add(StandardMaterial::default())),
-    ));
+            exposure: Exposure { ev100: 13.0 },
+            tonemapping: Tonemapping::AcesFitted,
+            bloom: Bloom::NATURAL,
+            fxaa: Fxaa::default(),
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Controller {
+    max_speed: f32,
+    max_slope: i8,
+}
+
+impl Controller {
+    pub fn new(max_speed: f32, max_slope: i8) -> Self {
+        Controller {
+            max_speed: max_speed,
+            max_slope: max_slope,
+        }
+    }
 }
 
 fn controller_update(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut p: Single<(&mut LinearVelocity, &mut Transform), With<Controller>>,
+    mut p: Single<(&mut LinearVelocity, &mut Transform, &Controller), With<Controller>>,
     mut mouse: MessageReader<MouseMotion>,
     mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
+    sq: SpatialQuery,
 ) {
     // Camera controls
     let mut cursor_delta = Vec2::ZERO;
@@ -113,7 +155,6 @@ fn controller_update(
         (KeyCode::KeyS, p.1.back().to_vec3a()),
         (KeyCode::KeyD, p.1.right().to_vec3a()),
         //(KeyCode::ShiftLeft, Vec3::Y),
-        (KeyCode::Space, Vec3A::Y),
     ]
     .iter()
     .cloned()
@@ -122,18 +163,23 @@ fn controller_update(
             a += dir;
         }
     }
+    if keyboard.pressed(KeyCode::Space)
+        && let Some(hit) = sq.cast_ray(
+            p.1.translation,
+            Dir3::NEG_Y,
+            2f32,
+            false,
+            &SpatialQueryFilter::default(),
+        )
+    {
+        info!("Jump! {}", hit.distance);
+        a += Vec3A::Y * 10f32;
+    }
+
     a = a.normalize_or_zero();
     a *= 0.2;
     p.0.0 += a.to_vec3();
-    p.0.0.x = p.0.0.x.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
-    p.0.0.y = p.0.0.y.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
-    p.0.0.z = p.0.0.z.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
-    /*let current_speed = p.0.length();
-    if (current_speed > 0f32) {
-        p.0.0 = p.0.0 / current_speed
-            * (current_speed - current_speed * 20f32 * time.delta_secs()).max(0.0)
-    }*/
-
-    // Some debug
-    info!("{}, {}", p.1.translation, p.1.rotation);
+    p.0.0.x = p.0.0.x.clamp(-p.2.max_speed, p.2.max_speed);
+    //p.0.0.y = p.0.0.y.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED); No need in vertical speed limit
+    p.0.0.z = p.0.0.z.clamp(-p.2.max_speed, p.2.max_speed);
 }

@@ -1,5 +1,9 @@
 use avian3d::prelude::{AngularVelocity, Collider, RigidBody};
-use b_engine::{BEngine, b_elements::* /*b_physics::physics::PhysBody*/};
+use b_engine::{
+    BEngine,
+    b_elements::*,
+    b_player::{Player, PlayerCamera}, /*b_physics::physics::PhysBody*/
+};
 use bevy::prelude::*;
 
 fn main() {
@@ -15,6 +19,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    //Spawn player
+    bengine.spawn((Player::default(), children![(PlayerCamera::default())]));
+
+    // Spawn scene
     let t = Transform::from_xyz(-2.5, 10f32, 0f32);
     bengine.spawn((
         Mesh3d(meshes.add(Cuboid::from_length(1f32))),

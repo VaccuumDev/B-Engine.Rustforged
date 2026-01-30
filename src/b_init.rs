@@ -27,14 +27,7 @@ impl Plugin for BInit {
         .add_plugins(SystemInformationDiagnosticsPlugin::default())
         .add_plugins(avian3d::PhysicsPlugins::default())
         .insert_resource(PipelinesReady::default())
-        .insert_resource(ClearColor(Color::linear_rgb(0.3, 0.3, 0.6)))
-        .insert_resource(GameSettings {
-            atmosphere: false,
-            motion_blur: true,
-        })
-        .add_systems(Startup, (global_startup, draw_ui))
-        .add_systems(Update, update_dmenu);
-        //.init_resource::<GameSettings>();
+        .insert_resource(ClearColor(Color::linear_rgb(0.3, 0.3, 0.6)));
     }
 }
 
@@ -58,30 +51,4 @@ fn global_startup(mut bengine: Commands) {
         DirectionalLight::default(),
         Transform::from_xyz(3.0, 3.0, 3.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
-}
-
-#[allow(unused_parens)]
-fn draw_ui(mut bengine: Commands) {
-    bengine.spawn((
-        Node::default(),
-        children![(Text::new("B-Engine v0.1.1")), (Text::new("dmenu"), DText)],
-    ));
-    /*if (PipelinesReady::get() != 0) {
-    despawn();
-    }*/
-}
-
-fn update_dmenu(dtext: Single<&mut Text, With<DText>>) {
-    //    if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
-    //        && let Some(value) = fps.smoothed()
-    //    {dtext.0 = }
-}
-
-#[derive(Component)]
-struct DText;
-
-#[derive(Resource)]
-pub struct GameSettings {
-    pub atmosphere: bool,
-    pub motion_blur: bool,
 }
