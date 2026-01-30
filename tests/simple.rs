@@ -41,4 +41,5 @@ fn setup(
         RigidBody::Static,
         Collider::cuboid(24f32, 0.1, 24f32),
     ));
+    bengine.spawn(DirectionalLight::default());
 }

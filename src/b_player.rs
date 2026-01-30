@@ -17,7 +17,7 @@ pub struct BPlayer;
 
 impl Plugin for BPlayer {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, controller_update);
+        app.add_systems(FixedUpdate, controller_update);
     }
 }
 
@@ -95,7 +95,7 @@ impl Default for PlayerCamera {
             hdr: Hdr,
             dist_fog: DistanceFog {
                 color: Color::srgb_u8(183, 251, 251),
-                falloff: FogFalloff::Exponential { density: 0.1 },
+                falloff: FogFalloff::Exponential { density: 0.02 },
                 ..default()
             },
             projection: Projection::from(PerspectiveProjection {
@@ -127,7 +127,7 @@ impl Controller {
 
 fn controller_update(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut p: Single<(&mut LinearVelocity, &mut Transform, &Controller), With<Controller>>,
+    mut p: Single<(&mut LinearVelocity, &mut Transform, &Controller, Entity), With<Controller>>,
     mut mouse: MessageReader<MouseMotion>,
     mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
@@ -163,17 +163,17 @@ fn controller_update(
             a += dir;
         }
     }
+
     if keyboard.pressed(KeyCode::Space)
-        && let Some(hit) = sq.cast_ray(
+        && sq.cast_ray(
             p.1.translation,
             Dir3::NEG_Y,
-            2f32,
+            1.51,
             false,
-            &SpatialQueryFilter::default(),
-        )
+            &SpatialQueryFilter::from_excluded_entities([p.3]),
+        ) != None
     {
-        info!("Jump! {}", hit.distance);
-        a += Vec3A::Y * 10f32;
+        p.0.0 += Vec3::Y * 5f32;
     }
 
     a = a.normalize_or_zero();
