@@ -3,6 +3,9 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions},
 };
 use bevy_pipelines_ready::PipelinesReady;
+use rand::{SeedableRng, rngs::SmallRng};
+
+const SEED: u64 = 123;
 
 pub struct BInit;
 
@@ -26,6 +29,14 @@ impl Plugin for BInit {
             avian3d::PhysicsPlugins::default(),
         ))
         .insert_resource(PipelinesReady::default())
+        .insert_resource(BRNG {
+            r: SmallRng::seed_from_u64(SEED),
+        })
         .insert_resource(ClearColor(Color::linear_rgb(0.3, 0.3, 0.6)));
     }
+}
+
+#[derive(Resource)]
+pub struct BRNG {
+    pub r: SmallRng,
 }

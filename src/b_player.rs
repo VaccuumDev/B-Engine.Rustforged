@@ -1,7 +1,9 @@
+use crate::b_init::BRNG;
 use avian3d::prelude::{
     Collider, Friction, LinearVelocity, LockedAxes, RigidBody, SpatialQuery, SpatialQueryFilter,
 };
-use bevy::{camera::visibility::RenderLayers, light::AtmosphereEnvironmentMapLight};
+use bevy::{audio::Volume, camera::visibility::RenderLayers};
+use rand::prelude::*;
 
 #[allow(unused_imports)]
 use bevy::{
@@ -15,6 +17,8 @@ use bevy::{
     render::view::Hdr,
 };
 use bevy_lunex::UiSourceCamera;
+
+use crate::b_audio::{StepSounds, WhooshSource};
 
 pub struct BPlayer;
 
@@ -130,6 +134,10 @@ fn controller_update(
     mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
     sq: SpatialQuery,
+    mut whoosh: Single<&mut AudioSink, With<WhooshSource>>,
+    mut steps: Single<(Entity, &StepSounds)>,
+    mut bengine: Commands,
+    mut rng: ResMut<BRNG>,
 ) {
     // Camera controls
     let mut cursor_delta = Vec2::ZERO;
@@ -159,6 +167,10 @@ fn controller_update(
     {
         if keyboard.pressed(key) {
             a += dir;
+
+            bengine
+                .entity(steps.0)
+                .insert(step_sound(rng.r.clone(), steps.1.sounds.clone()));
         }
     }
 
@@ -178,6 +190,16 @@ fn controller_update(
     a *= 0.2;
     p.0.0 += a.to_vec3();
     p.0.0.x = p.0.0.x.clamp(-p.2.max_speed, p.2.max_speed);
-    //p.0.0.y = p.0.0.y.clamp(-MAX_PLAYER_SPEED, MAX_PLAYER_SPEED); No need in vertical speed limit
     p.0.0.z = p.0.0.z.clamp(-p.2.max_speed, p.2.max_speed);
+
+    if p.0.length() > 15f32 {
+        whoosh.set_volume(Volume::Linear(p.0.length() / 1000f32));
+    } else {
+        whoosh.set_volume(Volume::Linear(0.0));
+    }
+}
+
+fn step_sound(mut sr: SmallRng, sounds: [Handle<AudioSource>; 4]) -> AudioPlayer {
+    let index: usize = sr.random_range(0..=4);
+    AudioPlayer(sounds[index].clone())
 }
