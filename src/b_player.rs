@@ -1,9 +1,14 @@
-use crate::b_init::BRNG;
+use std::time::Duration;
+
+use crate::{
+    b_audio::{StepSounds, WhooshInstanceHandle},
+    b_init::BRNG,
+};
 use avian3d::prelude::{
     Collider, Friction, LinearVelocity, LockedAxes, RigidBody, SpatialQuery, SpatialQueryFilter,
 };
-use bevy::{audio::Volume, camera::visibility::RenderLayers};
-use rand::prelude::*;
+use bevy::camera::visibility::RenderLayers;
+use bevy_kira_audio::{AudioControl, AudioEasing, AudioInstance, AudioTween};
 
 #[allow(unused_imports)]
 use bevy::{
@@ -17,16 +22,21 @@ use bevy::{
     render::view::Hdr,
 };
 use bevy_lunex::UiSourceCamera;
+use rand::Rng;
 
-use crate::b_audio::{StepSounds, WhooshSource};
+const TRANSITION: AudioTween = AudioTween::new(Duration::new(2, 0), AudioEasing::Linear);
 
 pub struct BPlayer;
 
 impl Plugin for BPlayer {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, controller_update);
+        app.add_systems(FixedUpdate, controller_update)
+            .insert_resource(StepTimer(Timer::from_seconds(0.5, TimerMode::Repeating)));
     }
 }
+
+#[derive(Resource)]
+struct StepTimer(Timer);
 
 #[derive(Bundle)]
 pub struct Player {
@@ -134,10 +144,12 @@ fn controller_update(
     mut cam: Single<&mut Transform, (With<Camera3d>, Without<Controller>)>,
     time: Res<Time>,
     sq: SpatialQuery,
-    mut whoosh: Single<&mut AudioSink, With<WhooshSource>>,
-    mut steps: Single<(Entity, &StepSounds)>,
-    mut bengine: Commands,
     mut rng: ResMut<BRNG>,
+    whoosh: Res<WhooshInstanceHandle>,
+    mut audio_instances: ResMut<Assets<AudioInstance>>,
+    audio: Res<bevy_kira_audio::prelude::Audio>,
+    step_sounds: Res<StepSounds>,
+    mut step_timer: ResMut<StepTimer>,
 ) {
     // Camera controls
     let mut cursor_delta = Vec2::ZERO;
@@ -149,7 +161,7 @@ fn controller_update(
         let dx = cursor_delta.x * 100f32 * dt;
         let dy = cursor_delta.y * 100f32 * dt;
 
-        p.1.rotate_y(-dx); // HACK: Idk looks kinda strange
+        p.1.rotate_y(-dx);
         cam.rotate_local_x(-dy);
     }
 
@@ -167,10 +179,13 @@ fn controller_update(
     {
         if keyboard.pressed(key) {
             a += dir;
-
-            bengine
-                .entity(steps.0)
-                .insert(step_sound(rng.r.clone(), steps.1.sounds.clone()));
+            step_timer.0.tick(time.delta());
+            if step_timer.0.just_finished() {
+                let index: usize = rng.r.random_range(..=3);
+                audio
+                    .play(step_sounds.sounds[index].clone())
+                    .with_volume(-12.);
+            }
         }
     }
 
@@ -192,14 +207,11 @@ fn controller_update(
     p.0.0.x = p.0.0.x.clamp(-p.2.max_speed, p.2.max_speed);
     p.0.0.z = p.0.0.z.clamp(-p.2.max_speed, p.2.max_speed);
 
-    if p.0.length() > 15f32 {
-        whoosh.set_volume(Volume::Linear(p.0.length() / 1000f32));
-    } else {
-        whoosh.set_volume(Volume::Linear(0.0));
-    }
-}
-
-fn step_sound(mut sr: SmallRng, sounds: [Handle<AudioSource>; 4]) -> AudioPlayer {
-    let index: usize = sr.random_range(0..=4);
-    AudioPlayer(sounds[index].clone())
+    if let Some(instance) = audio_instances.get_mut(&whoosh.o) {
+        if p.0.length() > 15f32 {
+            instance.resume(TRANSITION);
+        } else {
+            instance.pause(AudioTween::default());
+        }
+    };
 }
