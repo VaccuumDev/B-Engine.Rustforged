@@ -1,13 +1,12 @@
-use avian3d::prelude::{AngularVelocity, Collider, RigidBody};
+use avian3d::prelude::{Collider, RigidBody};
 use b_engine::{
     BEngine,
-    b_elements::*,
     b_player::{Player, PlayerCamera},
+    b_ui::blocks::{BUiBlock, BUiRoot},
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 
 fn main() {
-    //info!("Start.");
     App::new()
         .add_plugins(BEngine)
         .add_systems(Startup, setup)
@@ -22,22 +21,17 @@ fn setup(
     //Spawn player
     bengine.spawn((Player::default(), children![(PlayerCamera::default())]));
 
-    // Spawn scene
-    let t = Transform::from_xyz(-2.5, 10f32, 0f32);
+    //Spawn ui
     bengine.spawn((
-        Mesh3d(meshes.add(Cuboid::from_length(1f32))),
-        MeshMaterial3d(materials.add(Color::WHITE)),
-        Element::new(MaterialType::Metal, 255, 255),
-        t,
-        RigidBody::Dynamic,
-        Collider::cuboid(1f32, 1f32, 1f32),
-        AngularVelocity(vec3(2.5, 3.5, 1.5)),
+        BUiRoot::default(),
+        children![BUiBlock::new(Anchor::CENTER, (50.0, 50.0), (50.0, 50.0))],
     ));
+
+    // Spawn scene
     bengine.spawn((
         Mesh3d(meshes.add(Plane3d::new(Vec3::Y, vec2(12f32, 12f32)))),
         MeshMaterial3d(materials.add(Color::linear_rgb(0f32, 1f32, 0f32))),
         Transform::from_translation(Vec3::NEG_Y),
-        Element::new(MaterialType::Metal, 255, 255),
         RigidBody::Static,
         Collider::cuboid(24f32, 0.1, 24f32),
     ));

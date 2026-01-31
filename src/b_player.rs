@@ -1,6 +1,7 @@
 use avian3d::prelude::{
     Collider, Friction, LinearVelocity, LockedAxes, RigidBody, SpatialQuery, SpatialQueryFilter,
 };
+use bevy::camera::visibility::RenderLayers;
 #[allow(unused_imports)]
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -12,6 +13,7 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
 };
+use bevy_lunex::UiSourceCamera;
 
 pub struct BPlayer;
 
@@ -85,6 +87,8 @@ pub struct PlayerCamera {
     tonemapping: Tonemapping,
     bloom: Bloom,
     fxaa: Fxaa,
+    uisource: UiSourceCamera<0>,
+    layers: RenderLayers,
 }
 impl Default for PlayerCamera {
     fn default() -> Self {
@@ -106,6 +110,8 @@ impl Default for PlayerCamera {
             tonemapping: Tonemapping::AcesFitted,
             bloom: Bloom::NATURAL,
             fxaa: Fxaa::default(),
+            uisource: UiSourceCamera::<0>,
+            layers: RenderLayers::from_layers(&[0, 2]),
         }
     }
 }
