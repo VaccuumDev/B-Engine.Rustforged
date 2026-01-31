@@ -1,7 +1,8 @@
 use avian3d::prelude::{
     Collider, Friction, LinearVelocity, LockedAxes, RigidBody, SpatialQuery, SpatialQueryFilter,
 };
-use bevy::camera::visibility::RenderLayers;
+use bevy::{camera::visibility::RenderLayers, light::AtmosphereEnvironmentMapLight};
+
 #[allow(unused_imports)]
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -74,15 +75,6 @@ pub struct PlayerCamera {
     hdr: Hdr,
     dist_fog: DistanceFog,
     projection: Projection,
-    /*either!(settings.atmosphere => // TODO: settings
-            Some(Atmosphere::earthlike(scaterring.add(ScatteringMedium::default())))
-            ,,
-            None
-    ),
-    AtmosphereSettings::default(),
-    either! (settings.motion_blur =>
-        Some(MotionBlur::default()) ,, None),*/
-    //MotionBlur::default(),
     exposure: Exposure,
     tonemapping: Tonemapping,
     bloom: Bloom,
@@ -116,12 +108,12 @@ impl Default for PlayerCamera {
     }
 }
 
+#[allow(unused)]
 #[derive(Component)]
 pub struct Controller {
     max_speed: f32,
     max_slope: i8,
 }
-
 impl Controller {
     pub fn new(max_speed: f32, max_slope: i8) -> Self {
         Controller {

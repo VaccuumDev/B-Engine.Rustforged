@@ -1,6 +1,7 @@
-use crate::{b_elements::BElements, b_init::BInit, b_player::BPlayer};
+use crate::{b_audio::BAudio, b_elements::BElements, b_init::BInit, b_player::BPlayer};
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
+pub mod b_audio;
 pub mod b_elements;
 pub mod b_init;
 pub mod b_player;
@@ -14,6 +15,6 @@ impl PluginGroup for BEngine {
             .add(BInit)
             .add(BElements)
             .add(BPlayer)
-        //.add(BPhysics)
+            .add(BAudio)
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "b-engine"
-version = "0.1.0"
+version = "1.3.0"
 edition = "2024"
 
 [dependencies]
@@ -12,9 +12,15 @@ bevy_quinnet = "0.20.0"
 bevy_lunex = "0.6.0"
 
 [[test]]
-name = "test"
+name = "simple"
 path = "tests/simple.rs"
 harness = false
+
+[[test]]
+name = "ui"
+path = "tests/ui.rs"
+harness = false
+
 #
 #[profile.release]
 #codegen-units = 1

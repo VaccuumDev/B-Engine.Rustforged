@@ -41,5 +41,12 @@ fn setup(
         RigidBody::Static,
         Collider::cuboid(24f32, 0.1, 24f32),
     ));
-    bengine.spawn(DirectionalLight::default());
+    bengine.spawn(DirectionalLight {
+        illuminance: 4000.0,
+        color: Color::WHITE,
+        shadows_enabled: true,
+        affects_lightmapped_mesh_diffuse: true,
+        shadow_depth_bias: 16.0,
+        shadow_normal_bias: 16.0,
+    });
 }
