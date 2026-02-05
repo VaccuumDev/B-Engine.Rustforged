@@ -1,9 +1,10 @@
 <div align="center">
 
 ![B-Engine.Rustforged](gh_res/BE-LOGO.png)
-*Performant procedural worlds game engine.*
 
 ![GitHub License](https://img.shields.io/github/license/VaccuumDev/B-Engine.Rustforged?style=for-the-badge&color=seagreen)
+*Performant procedural worlds game engine.*
+
 </div>
 
 ---
