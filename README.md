@@ -1,6 +1,12 @@
-## B-Engine.Rustforged
+<div align="center">
+![B-Engine.Rustforged](gh_res/BE-LOGO.png)
+*Performant procedural worlds game engine.*
 
-**B-Engine.Rustforged** is a complete reimplementation of the B-Engine, rewritten in Rust using Bevy 0.18.0. This engine is optimized for physics and is designed primarily for open-world games and procedural generation and is being developed specifically for my game, **B-World**.
+![GitHub License](https://img.shields.io/github/license/VaccuumDev/B-Engine.Rustforged?style=for-the-badge&color=seagreen)
+</div>
+
+> [!WARN]
+> Engine is in early alpha stage of development and is being developed by one little self-confident fool, please don't use it in serious projects
 
 ---
 
@@ -22,10 +28,7 @@
 - **Optimized Physics**: Improved physics engine that leverages Rust's efficiency.
 - **Designed for Open-World Games**: Tailored for developing expansive, immersive worlds.
 - **Procedural Generation Support**: Facilitate the creation of dynamic, ever-changing environments.
-- **Modular Design**: Easily extendable architecture for developers to build upon using *Bevy*.
-- **Community-Driven**: Open-source project encouraging contributions and enhancements.
-
----
+- **Modular Design**: Easily add or remove modules using Bevy ECS + Plugins system.
 
 ### Installation
 
@@ -42,8 +45,6 @@ Ensure you have [Rust](https://www.rust-lang.org/) and [Cargo](https://doc.rust-
 #### 0R
 
 Clone the repository and directly connect engine files to your project
-
----
 
 ### Usage
 
@@ -76,6 +77,8 @@ Please ensure any contributions align with [contribution guidelines](CONTRIBUTIN
 ### License
 
 B-Engine.Rustforged is licensed under the GNU General Public License v3.0.
+See [license](LICENSE) for more info.
+![GNU GPL](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/GPLv3_Logo.svg/960px-GPLv3_Logo.svg.png?20210605024701)
 
 ---
 
@@ -83,5 +86,6 @@ B-Engine.Rustforged is licensed under the GNU General Public License v3.0.
 
 - [Bevy Official Website](https://bevy.org/)
 - [Bevy GitHub Repository](https://github.com/bevyengine/bevy)
+- [Avian3d Github Repository](https://github.com/avianphysics/avian)
+- [480 Design Solar Theme Icons](https://github.com/480-Design/Solar-icon-set)
 
-Feel free to reach out if you have any questions or need assistance!
